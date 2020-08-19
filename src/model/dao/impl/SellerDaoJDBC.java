@@ -1,9 +1,11 @@
 package model.dao.impl;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,9 +27,45 @@ public class SellerDaoJDBC implements SellerDao{
 	
 	@Override
 	public void insert(Seller obj) { //inserir
-		// TODO Auto-generated method stub
 		
+		PreparedStatement st = null;
+		try {
+			
+			st = conn.prepareStatement(
+					"INSERT INTO seller "
+					+"(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+					+"VALUES "
+					+"(?, ?, ?, ?, ?) ",
+					Statement.RETURN_GENERATED_KEYS); //return_gene... é para retorna o id do novo vendedor inserido
+			
+			st.setString(1, obj.getName());
+			st.setString(2, obj.getEmail());
+			st.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
+			st.setDouble(4, obj.getBaseSalary());
+			st.setInt(5, obj.getDepartment().getId());
+			
+			int rowsAffected = st.executeUpdate();
+			
+			if (rowsAffected > 0) {
+				ResultSet rs = st.getGeneratedKeys();
+				if (rs.next()) {
+					int id = rs.getInt(1);
+					obj.setId(id);//atribuimos um id gerado dentro do objeto obj, para que esse objeto fique populado com o novo id dele
+				}
+				DB.closeResultSet(rs);
+		}
+			else {
+				throw new DbException("Unexpected error!  No rows affected!");
+		}
 	}
+			catch (SQLException e) {
+				throw new DbException(e.getMessage());
+			}
+			finally {
+				DB.closeStatement(st);
+			}
+		}
+	
 
 	@Override
 	public void update(Seller obj) { //modificar
